@@ -1,23 +1,23 @@
 cc_library(
     name = "lumi",
-    srcs = ["lumi.4.c"],
-    hdrs = ["lumi.4.h"],
+    srcs = ["lumi.2.c"],
+    hdrs = ["lumi.2.h"],
     # This is a workaround for https://github.com/bazelbuild/bazel/issues/6337.
     includes = ["."],
     # strip_include_prefix allows dependending rules to include headers without
     # the TL4 prefix.
     strip_include_prefix = "",
     visibility = [
-        "//TL5:__pkg__",
+        "//TL3:__pkg__",
         "//lumi-command:__pkg__",
     ],
 )
 
 cc_binary(
     name = "compiler",
-    srcs = ["tl4-compiler.c"],
+    srcs = ["tl2-compiler.c"],
     visibility = ["//visibility:public"],
     deps = [
-        "//TL3:lumi",
+        "//TL1:lumi",
     ],
 )
