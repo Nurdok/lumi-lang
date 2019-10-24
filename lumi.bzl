@@ -1,8 +1,8 @@
 def _generated_c_impl(ctx):
     lumi_version = ctx.attr.lumi_version
 
-    if lumi_version == 0:
-        # TL0 only accepts one input
+    if lumi_version in (0, 1):
+        # Only accepts one input.
         if (ctx.files.deps) or len(ctx.files.srcs) > 1:
             fail("Lumi 0 compiler only support one input file")
         args = [ctx.files.srcs[0].path]
@@ -16,7 +16,34 @@ def _generated_c_impl(ctx):
                 "Generating {} from Lumi.".format(ctx.outputs.out.path),
         )
 
-    elif lumi_version == 5:
+    elif lumi_version in (2,):
+        # Output file is inferred.
+        args = [f.path for f in ctx.files.deps]
+        args += [f.path for f in ctx.files.srcs]
+
+        generated_output = \
+            ctx.actions.declare_file(ctx.files.srcs[-1].basename.replace("2.lm", "c"))
+
+        #fail(ctx.outputs.out.path + "\n" + generated_output.path + "\n" + ctx.files.srcs[0].path)
+
+        ctx.actions.run(
+            inputs = ctx.files.srcs + ctx.files.deps,
+            outputs = [generated_output],
+            executable = ctx.file.compiler,
+            arguments = args,
+            progress_message =
+                "Generating {} from Lumi.".format(generated_output.path),
+        )
+
+        ctx.actions.run_shell(
+            inputs = [generated_output],
+            outputs = [ctx.outputs.out],
+            arguments = [generated_output.path, ctx.outputs.out.path],
+            command = "cp",
+            progress_message = "Copying generated file as {}".format(ctx.outputs.out.path),
+        )
+
+    elif lumi_version in (5,):
         args = [ctx.outputs.out.path]
         args += [f.path for f in ctx.files.srcs]
         args += [f.path for f in ctx.files.deps]
@@ -59,8 +86,8 @@ lumi_generated_c = rule(
 )
 
 def lumi_binary(name, srcs, **kwargs):
-    generated_name = "{}.gen".format(name)
     lumi_version = kwargs.pop("lumi_version", 5)
+    generated_name = "{}.gen".format(name)
 
     lumi_generated_c(
         name = generated_name,
@@ -71,8 +98,12 @@ def lumi_binary(name, srcs, **kwargs):
     )
 
     deps = []
-    if (lumi_version == 0):
+    if lumi_version == 0:
         deps += ["//TL0:lumi"]
+    elif lumi_version == 1:
+        deps += ["//TL1:lumi"]
+    elif lumi_version == 2:
+        deps += ["//TL2:lumi"]
 
     native.cc_binary(
         name = name,
