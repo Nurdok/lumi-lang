@@ -1,5 +1,8 @@
 def _generated_c_impl(ctx):
-    args = [ctx.outputs.out.path]
+    args = []
+    if ctx.attr.tested_module:
+        args += ["-t", ctx.attr.tested_module]
+    args += [ctx.outputs.out.path]
     args += [f.path for f in ctx.files.deps]
     args += [f.path for f in ctx.files.srcs]
 
@@ -29,6 +32,7 @@ lumi_generated_c = rule(
             doc = "Lumi files to compile",
         ),
         "deps": attr.label_list(allow_files = True),
+        "tested_module": attr.string(mandatory = False),
     },
     implementation = _generated_c_impl,
     outputs = {"out": "%{name}.c"},
@@ -45,6 +49,29 @@ def lumi_binary(name, srcs, deps, **kwargs):
     )
 
     native.cc_binary(
+        name = name,
+        srcs = [":" + generated_name],
+        deps = [],
+        copts = [
+            "-Wno-unused-label",
+            "-Wno-unused-variable",
+            "-Wno-unused-but-set-variable",
+        ],
+        **kwargs
+    )
+
+
+def lumi_test(name, srcs, deps, **kwargs):
+    generated_name = "{}.gen".format(name)
+
+    lumi_generated_c(
+        name = generated_name,
+        srcs = srcs,
+        deps = deps,
+        tested_module = name,
+    )
+
+    native.cc_test(
         name = name,
         srcs = [":" + generated_name],
         deps = [],
