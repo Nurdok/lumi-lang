@@ -80,7 +80,7 @@ time-tests: build-dir
 		-e -Istdlibs/tests -o $(BUILDDIR)/time-tests -r
 
 os-tests: build-dir
-   lumi -t os stdlibs/os.5.lm stdlibs/tests/os-test.5.lm -r stdlibs/list.5.lm \
+    lumi -t os stdlibs/os.5.lm stdlibs/tests/os-test.5.lm -r stdlibs/list.5.lm \
 	  -e -Istdlibs/tests
 
 stdlibs-tests: | math-tests ds-tests time-tests os-tests

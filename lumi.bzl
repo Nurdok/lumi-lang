@@ -1,7 +1,7 @@
 def _generated_c_impl(ctx):
     args = [ctx.outputs.out.path]
-    args += [f.path for f in ctx.files.srcs]
     args += [f.path for f in ctx.files.deps]
+    args += [f.path for f in ctx.files.srcs]
 
     ctx.actions.run(
         inputs = ctx.files.srcs + ctx.files.deps,
@@ -28,7 +28,7 @@ lumi_generated_c = rule(
             allow_files = True,
             doc = "Lumi files to compile",
         ),
-        "deps": attr.label_list(),
+        "deps": attr.label_list(allow_files = True),
     },
     implementation = _generated_c_impl,
     outputs = {"out": "%{name}.c"},
